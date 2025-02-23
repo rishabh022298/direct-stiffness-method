@@ -71,7 +71,7 @@ K_{global} = \Gamma^T k_{local} \Gamma
 $$
 
 Where:
-- $ \Gamma $ is the 12x12 transformation matrix calculated using the rotation matrix for the element.
+- $\Gamma$ is the 12x12 transformation matrix calculated using the rotation matrix for the element.
 
 ### 3. Displacement and Reaction Calculation
 The system of equations is solved using:
