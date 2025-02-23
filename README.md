@@ -105,3 +105,43 @@ To use the 3D Frame Solver, you need to have **Python** and **NumPy** installed 
 
 ```bash
 pip install numpy
+```
+## Usage
+```python
+from frame_solver import Frame3DSolver
+import numpy as np
+
+# Define nodes
+nodes = {
+    1: np.array([0, 0, 0]),
+    2: np.array([4, 0, 0]),
+    3: np.array([4, 3, 0])
+}
+
+# Define elements
+elements = [
+    (1, 2, {'E': 210e9, 'nu': 0.3, 'A': 0.01, 'Iz': 1.0e-6, 'Iy': 2.0e-6, 'J': 1.0e-6}),
+    (2, 3, {'E': 210e9, 'nu': 0.3, 'A': 0.01, 'Iz': 1.0e-6, 'Iy': 2.0e-6, 'J': 1.0e-6})
+]
+
+# Define loads
+loads = {
+    3: np.array([0, -10000, 0, 0, 0, 0])
+}
+
+# Define supports (True for fixed DOFs)
+supports = {
+    1: [True, True, True, True, True, True],
+    2: [False, True, True, False, False, False]
+}
+
+# Create solver instance
+solver = Frame3DSolver(nodes, elements, loads, supports)
+
+# Solve for displacements and reactions
+displacements, reactions = solver.solve()
+
+# Display results
+print("Nodal Displacements:", displacements)
+print("Support Reactions:", reactions)
+```
