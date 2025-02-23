@@ -13,8 +13,6 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 - [Input Format](#input-format)
 - [Output](#output)
 - [Error Handling](#error-handling)
-- [Acknowledgments](#acknowledgments)
-
 ---
 
 ## Introduction
@@ -208,6 +206,7 @@ for node, react in react_dict.items():
     print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
           f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
 ```
+**Note:** User is expected to take care of units while giving the inputs. Make sure they are consistent throughout.
 
 ## Output
 The above script when ran properly will give an output which looks something like this:
@@ -221,3 +220,124 @@ Reaction Forces and Moments at Supports:
 Node 0: [Fx: -0.00, Fy: 1.60, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 6.00]
 Node 1: [Fx: 0.00, Fy: 9998.40, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 2.00]
 ```
+
+## Error Handling
+
+This 3D Frame Solver includes comprehensive error handling to ensure robust and reliable computations. The error handling is categorized into the following areas:
+
+---
+
+### 1. Input Validation
+
+- **Data Type Checks**: Ensures all inputs are of the correct data type.
+  - Example:
+    ```python
+    if not isinstance(nodes, dict):
+        raise TypeError("nodes must be a dictionary.")
+    ```
+- **Shape and Length Checks**: Verifies the dimensions of arrays and lists.
+  - Example:
+    ```python
+    if vec.shape != (3,):
+        raise ValueError("vec must be a 3-element vector.")
+    ```
+- **Value Checks**: Confirms that input values are within expected ranges.
+  - Example:
+    ```python
+    if not (0 <= nu < 0.5):
+        raise ValueError("Poisson's ratio (nu) must be between 0 and 0.5.")
+    ```
+
+---
+
+### 2. Numerical Stability
+
+- **Condition Number Check**: Checks for numerical singularity in the global stiffness matrix.
+  - Example:
+    ```python
+    cond_number = np.linalg.cond(K_reduced)
+    if cond_number > 1e12:
+        raise np.linalg.LinAlgError("Global stiffness matrix is nearly singular.")
+    ```
+- **NaN and Inf Checks**: Ensures no NaN or Inf values appear in the solution.
+  - Example:
+    ```python
+    if np.any(np.isnan(d_free)) or np.any(np.isinf(d_free)):
+        raise np.linalg.LinAlgError("Solution contains NaN or Inf.")
+    ```
+
+---
+
+### 3. Physical Validity Checks
+
+- **Unreasonable Displacement Magnitudes**: Identifies unrealistic displacements due to numerical instability.
+  - Example:
+    ```python
+    if np.any(np.abs(d_free) > 1e6):
+        raise np.linalg.LinAlgError("Unreasonably large displacements detected.")
+    ```
+- **Element Length Check**: Ensures that elements have positive nonzero lengths.
+  - Example:
+    ```python
+    if np.isclose(L, 0.0):
+        raise ValueError("Element length cannot be zero.")
+    ```
+
+---
+
+### 4. Structural Integrity Checks
+
+- **Unit Vector Verification**: Checks that the reference vector is a unit vector.
+  - Example:
+    ```python
+    if not np.isclose(np.linalg.norm(vec), 1.0):
+        raise ValueError("Expected a unit vector for reference vector.")
+    ```
+- **Parallel Vector Check**: Ensures that reference vectors are not parallel to the beam axis.
+  - Example:
+    ```python
+    if np.isclose(np.linalg.norm(np.cross(vec_1, vec_2)), 0.0):
+        raise ValueError("Reference vector is parallel to beam axis.")
+    ```
+
+---
+
+### 5. Consistency Checks
+
+- **Element Definition Check**: Ensures each element is defined with two nodes and section properties.
+  - Example:
+    ```python
+    if len(elem) != 3:
+        raise ValueError("Each element must be a tuple of (node1, node2, properties).")
+    ```
+- **Boundary Condition Checks**: Verifies that boundary conditions are specified as lists of booleans.
+  - Example:
+    ```python
+    if not all(isinstance(x, bool) for x in bc):
+        raise TypeError("Boundary conditions must be booleans.")
+    ```
+
+---
+
+### 6. Result Validation
+
+- **Shape Checks for Results**: Ensures that the shape of the reactions vector is consistent with the degrees of freedom.
+  - Example:
+    ```python
+    if reactions.shape != (self.ndof,):
+        raise ValueError("Reactions vector must be of length ndof.")
+    ```
+
+---
+
+### 7. Exception Handling
+
+- **Numerical Errors**: Catches and raises informative errors for numerical issues during system solving.
+  - Example:
+    ```python
+    try:
+        d_free = np.linalg.solve(K_reduced, F_reduced)
+    except np.linalg.LinAlgError as e:
+        raise np.linalg.LinAlgError(f"Error solving system of equations: {e}")
+    ```
+This comprehensive approach to error handling ensures that the 3D Frame Solver is both robust and user-friendly, significantly reducing the likelihood of runtime errors and numerical instabilities.
