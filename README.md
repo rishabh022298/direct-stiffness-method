@@ -190,6 +190,8 @@ displacements, reactions = solver.solve()
 ```
 Reshaping and printing the results:
 ```python
+disp_matrix = displacements.reshape((-1, 6))
+reac_matrix = reactions.reshape((-1, 6))
 # Create a dictionary for displacements and reactions
 disp_dict = {node: disp_matrix[i] for i, node in enumerate(nodes)}
 react_dict = {node: reac_matrix[i] for i, node in enumerate(nodes)}
