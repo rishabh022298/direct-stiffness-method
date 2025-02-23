@@ -270,8 +270,8 @@ class Frame3DSolver:
             J = props["J"]
             local_z = props.get("local_z", None)
             
-            gamma = rotation_matrix_3D(coord1[0], coord1[1], coord1[2],
-                                       coord2[0], coord2[1], coord2[2],
+            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
+                                       float(coord2[0]), float(coord2[1]), float(coord2[2]),
                                        v_temp=local_z)
             Gamma = transformation_matrix_3D(gamma)
             k_local = local_elastic_stiffness_matrix_3D_beam(E, nu, A, L, Iy, Iz, J)
