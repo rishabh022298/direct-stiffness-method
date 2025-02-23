@@ -10,9 +10,9 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 - [Features](#features)
 - [Mathematical Formulation](#mathematical-formulation)
 - [Installation](#installation)
+- [Input Format](#input-format)
 - [Usage](#usage)
 - [Output](#output)
-- [Input Format](#input-format)
 - [Examples](#examples)
 - [Error Handling](#error-handling)
 - [Contributing](#contributing)
@@ -128,6 +128,91 @@ Test the code is working with pytest
 ```bash
 pytest -v --cov=directstiffnessmethod --cov-report term-missing
 ```
+## Input Format
+Script can be used for evaluation as follows:
+
+```python
+from directstiffnessmethod import direct_stiffness_method as dsm
+import numpy as np
+```
+First user needs to define the nodes and their locations (let's say there are three nodes):
+```python
+# Define node coordinates (node ID: [x, y, z])
+nodes = {
+  0: np.array([0.0, 5.0, 0.0]),
+  1: np.array([5.0, 0.0, 0.0]),
+  2: np.array([5.0, 5.0, 0.0])
+}
+```
+Next, user needs to define material and geometrical properties of various elements. This can be done in the following way (let's say for a 2 element structure):
+```python
+# Each element is defined as: (node1, node2, section_properties)
+section_props_element_1 = {
+  "E": 210e9,           # Young's modulus in Pascals
+  "nu": 0.3,            # Poisson's ratio
+  "A": 0.01,            # Cross-sectional area in m^2
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
+  "J": 1.67e-5,         # Torsional constant in m^4
+  "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+}
+
+section_props_element_2 = {
+  "E": 210e9,           # Young's modulus in Pascals
+  "nu": 0.3,            # Poisson's ratio
+  "A": 0.01,            # Cross-sectional area in m^2
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
+  "J": 1.67e-5,         # Torsional constant in m^4
+  "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+}
+```
+Once the properties haves been defined, then user can move on to finalising the geometry by defining which nodes are connected and what are the properties of those elements.
+```python
+elements = [
+  (0, 2, section_props_element_1),
+  (1, 2, section_props_element_2)
+]
+```
+After defining the elements, nodal forces and boundary conditions can be defined in any order.
+```python
+# For each node, a load vector [Fx, Fy, Fz, Mx, My, Mz] is applied.
+loads = {
+  2: np.array([0.0, -10000.0, 0.0, 0.0, 0.0, 0.0])  # Applied at node 2 (e.g., vertical load)
+}
+```
+```python
+# For each node, provide a list of 6 booleans (True = DOF is fixed).
+supports = {
+  0: [False, True, True, False, False, True],  # Node 0 is partially fixed
+  1: [True, True, True, True, True, True]      # Node 1 is fully fixed
+}
+```
+Once the user is satisfied with the geometry and the applied nodal loads and boundary conditions, then the solver can be initiated:
+```python
+solver = dsm.Frame3DSolver(nodes, elements, loads, supports)
+displacements, reactions = solver.solve()
+```
+Reshaping and printing the results:
+```python
+# Create a dictionary for displacements and reactions
+disp_dict = {node: disp_matrix[i] for i, node in enumerate(nodes)}
+react_dict = {node: reac_matrix[i] for i, node in enumerate(nodes)}
+    
+# Output the results
+print("Nodal Displacements and Rotations:")
+for node, disp in disp_dict.items():
+  print(f"Node {node}: [u: {disp[0]:.6f}, v: {disp[1]:.6f}, w: {disp[2]:.6f}, "
+        f"rot_x: {disp[3]:.6f}, rot_y: {disp[4]:.6f}, rot_z: {disp[5]:.6f}]")
+    
+print("\nReaction Forces and Moments at Supports:")
+for node, react in react_dict.items():
+  # Only display reactions for nodes with boundary conditions
+  if node in supports:
+    print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
+          f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
+```
+
 ## Usage
 ```python
 from directstiffnessmethod import direct_stiffness_method as dsm
