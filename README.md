@@ -11,8 +11,8 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 - [Mathematical Formulation](#mathematical-formulation)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Output](#output)
 - [Input Format](#input-format)
-- [Output Format](#output-format)
 - [Examples](#examples)
 - [Error Handling](#error-handling)
 - [Contributing](#contributing)
@@ -205,4 +205,17 @@ for node, react in react_dict.items():
   if node in supports:
     print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
           f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
+```
+
+## Output
+The above script when ran properly will give an output which looks something like this:
+```bash
+Nodal Displacements and Rotations:
+Node 0: [u: 0.000014, v: 0.000000, w: 0.000000, rot_x: 0.000000, rot_y: 0.000000, rot_z: 0.000000]
+Node 1: [u: 0.000000, v: 0.000000, w: 0.000000, rot_x: 0.000000, rot_y: 0.000000, rot_z: 0.000000]
+Node 2: [u: 0.000014, v: -0.000024, w: -0.000000, rot_x: 0.000000, rot_y: -0.000000, rot_z: -0.000006]
+
+Reaction Forces and Moments at Supports:
+Node 0: [Fx: -0.00, Fy: 1.60, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 6.00]
+Node 1: [Fx: 0.00, Fy: 9998.40, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 2.00]
 ```
