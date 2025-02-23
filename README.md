@@ -98,13 +98,35 @@ Where:
 To use the 3D Frame Solver, you need to have **Python** and **NumPy** installed on your system.
 
 ### Prerequisites
-- Python 3.x
+- Python 3.12
 - NumPy
 
-### Installation via pip
+### Installation
 
+**Please ensure that you run the following commands in the terminal after downloading the repository (Please ensure that repository is not in the downloads folder and their relative locations are not changed.)**\
+To install the package, first create a virtual environment:
 ```bash
-pip install numpy
+conda create --name direct-stiffness-env python=3.12
+```
+Once the environment has been created, activate it:
+```bash
+conda activate direct-stiffness-env
+```
+Double check that python is version 3.12 in the environment:
+```bash
+python --version
+```
+Please ensure that pip is using the most up to date version of setuptools:
+```bash
+pip install --upgrade pip setuptools wheel
+```
+Create the editable install of the Direct Stiffness Method code (note: you must be in the correct directory, i.e. where all of the files of the repository are.)
+```bash
+pip install -e .
+```
+Test the code is working with pytest
+```bash
+pytest -v --cov=directstiffnessmethod --cov-report term-missing
 ```
 ## Usage
 ```python
