@@ -52,13 +52,13 @@ This solver is particularly useful for engineers, researchers, and students invo
 ### 1. Local Elastic Stiffness Matrix
 The local elastic stiffness matrix for a 3D beam element is computed using:
 
-\[
+$$\[
 k_e = 
 \begin{bmatrix}
 k_{11} & k_{12} \\
 k_{21} & k_{22}
 \end{bmatrix}
-\]
+\]$$
 
 Where:
 - \( k_{11}, k_{12}, k_{21}, k_{22} \) are sub-matrices representing axial, torsional, and bending stiffness contributions.
