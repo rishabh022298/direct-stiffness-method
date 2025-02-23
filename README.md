@@ -61,35 +61,35 @@ k_{21} & k_{22}
 $$
 
 Where:
-- \( k_{11}, k_{12}, k_{21}, k_{22} \) are sub-matrices representing axial, torsional, and bending stiffness contributions.
+- $ k_{11}, k_{12}, k_{21}, k_{22} $ are sub-matrices representing axial, torsional, and bending stiffness contributions.
 
 ### 2. Global Stiffness Matrix
 The global stiffness matrix is assembled by transforming the local stiffness matrix into the global coordinate system using:
 
-\[
+$$
 K_{global} = \Gamma^T k_{local} \Gamma
-\]
+$$
 
 Where:
-- \( \Gamma \) is the 12x12 transformation matrix calculated using the rotation matrix for the element.
+- $ \Gamma $ is the 12x12 transformation matrix calculated using the rotation matrix for the element.
 
 ### 3. Displacement and Reaction Calculation
 The system of equations is solved using:
 
-\[
+$$
 K_{reduced} d_{free} = F_{reduced}
-\]
+$$
 
 Reactions at the supports are calculated as:
 
-\[
+$$
 R = K d - F
-\]
+$$
 
 Where:
-- \( d \) is the vector of nodal displacements and rotations.
-- \( F \) is the global load vector.
-- \( R \) is the reaction vector at constrained degrees of freedom.
+- $ d $ is the vector of nodal displacements and rotations.
+- $ F $ is the global load vector.
+- $ R $ is the reaction vector at constrained degrees of freedom.
 
 ---
 
