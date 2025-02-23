@@ -61,7 +61,7 @@ k_{21} & k_{22}
 $$
 
 Where:
-- $ k_{11}, k_{12}, k_{21}, k_{22} $ are sub-matrices representing axial, torsional, and bending stiffness contributions.
+- $$k_{11}, k_{12}, k_{21}, k_{22}$$ are sub-matrices representing axial, torsional, and bending stiffness contributions.
 
 ### 2. Global Stiffness Matrix
 The global stiffness matrix is assembled by transforming the local stiffness matrix into the global coordinate system using:
