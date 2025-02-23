@@ -130,7 +130,7 @@ pytest -v --cov=directstiffnessmethod --cov-report term-missing
 ```
 ## Usage
 ```python
-from frame_solver import Frame3DSolver
+from directstiffnessmethod import direct_stiffness_method as dsm
 import numpy as np
 
 # Define nodes
@@ -143,7 +143,17 @@ nodes = {
     
 # Define element connectivity and section properties.
 # Each element is defined as: (node1, node2, section_properties)
-section_props = {
+section_props_element_1 = {
+  "E": 210e9,           # Young's modulus in Pascals
+  "nu": 0.3,            # Poisson's ratio
+  "A": 0.01,            # Cross-sectional area in m^2
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
+  "J": 1.67e-5,         # Torsional constant in m^4
+  "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+}
+
+section_props_element_2 = {
   "E": 210e9,           # Young's modulus in Pascals
   "nu": 0.3,            # Poisson's ratio
   "A": 0.01,            # Cross-sectional area in m^2
@@ -154,8 +164,8 @@ section_props = {
 }
 
 elements = [
-  (0, 2, section_props),
-  (1, 2, section_props)
+  (0, 2, section_props_element_1),
+  (1, 2, section_props_element_2)
 ]
     
 # Define nodal loads.
@@ -168,11 +178,11 @@ loads = {
 # For each node, provide a list of 6 booleans (True = DOF is fixed).
 supports = {
   0: [False, True, True, False, False, True],  # Node 0 is partially fixed
-  1: [True, True, True, True, True, True]  # Node 1 is fully fixed
+  1: [True, True, True, True, True, True]      # Node 1 is fully fixed
 }
     
 # Instantiate the solver and solve the system.
-solver = Frame3DSolver(nodes, elements, loads, supports)
+solver = dsm.Frame3DSolver(nodes, elements, loads, supports)
 displacements, reactions = solver.solve()
     
 # Reshape the results for clarity (each row corresponds to a node with 6 DOFs).
