@@ -13,6 +13,7 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 - [Input Format](#input-format)
 - [Output](#output)
 - [Error Handling](#error-handling)
+- [In Class Exercise](#in-class-exercise)
 ---
 
 ## Introduction
