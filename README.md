@@ -341,3 +341,9 @@ This 3D Frame Solver includes comprehensive error handling to ensure robust and 
         raise np.linalg.LinAlgError(f"Error solving system of equations: {e}")
     ```
 This comprehensive approach to error handling ensures that the 3D Frame Solver is both robust and user-friendly, significantly reducing the likelihood of runtime errors and numerical instabilities.
+
+## In Class Exercise
+A basic example.py file is provided with the basic structure. User is expected to add nodes, elements, proerties, etc in the provided space in the script to analyse the frame given in the class during code review. Once the script has been finalised, then user can run the in class example by running the following command in the terminal:
+```bash
+python example.py
+```
