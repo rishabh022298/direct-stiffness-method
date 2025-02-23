@@ -21,7 +21,7 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 
 ---
 
-## 📘 Introduction
+## Introduction
 
 The **3D Frame Solver** is designed to:
 - Assemble the global stiffness matrix for the structure.
@@ -33,7 +33,7 @@ This solver is particularly useful for engineers, researchers, and students invo
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Local Elastic Stiffness Matrix**: Computes the local stiffness matrix for a 3D beam element considering axial, torsion, and bending effects.
 - **Rotation Matrix and Transformation Matrix**: Efficiently calculates the rotation and transformation matrices to handle global and local coordinate transformations.
@@ -47,7 +47,7 @@ This solver is particularly useful for engineers, researchers, and students invo
 
 ---
 
-## 🧠 Mathematical Formulation
+## Mathematical Formulation
 
 ### 1. Local Elastic Stiffness Matrix
 The local elastic stiffness matrix for a 3D beam element is computed using:
@@ -93,7 +93,7 @@ Where:
 
 ---
 
-## 🔧 Installation
+## Installation
 
 To use the 3D Frame Solver, you need to have **Python** and **NumPy** installed on your system.
 
