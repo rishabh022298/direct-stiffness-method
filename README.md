@@ -112,36 +112,65 @@ from frame_solver import Frame3DSolver
 import numpy as np
 
 # Define nodes
+# Define node coordinates (node ID: [x, y, z])
 nodes = {
-    1: np.array([0, 0, 0]),
-    2: np.array([4, 0, 0]),
-    3: np.array([4, 3, 0])
+  0: np.array([0.0, 5.0, 0.0]),
+  1: np.array([5.0, 0.0, 0.0]),
+  2: np.array([5.0, 5.0, 0.0])
+}
+    
+# Define element connectivity and section properties.
+# Each element is defined as: (node1, node2, section_properties)
+section_props = {
+  "E": 210e9,           # Young's modulus in Pascals
+  "nu": 0.3,            # Poisson's ratio
+  "A": 0.01,            # Cross-sectional area in m^2
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
+  "J": 1.67e-5,         # Torsional constant in m^4
+  "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
 }
 
-# Define elements
 elements = [
-    (1, 2, {'E': 210e9, 'nu': 0.3, 'A': 0.01, 'Iz': 1.0e-6, 'Iy': 2.0e-6, 'J': 1.0e-6}),
-    (2, 3, {'E': 210e9, 'nu': 0.3, 'A': 0.01, 'Iz': 1.0e-6, 'Iy': 2.0e-6, 'J': 1.0e-6})
+  (0, 2, section_props),
+  (1, 2, section_props)
 ]
-
-# Define loads
+    
+# Define nodal loads.
+# For each node, a load vector [Fx, Fy, Fz, Mx, My, Mz] is applied.
 loads = {
-    3: np.array([0, -10000, 0, 0, 0, 0])
+  2: np.array([0.0, -10000.0, 0.0, 0.0, 0.0, 0.0])  # Applied at node 2 (e.g., vertical load)
 }
-
-# Define supports (True for fixed DOFs)
+    
+# Define support conditions.
+# For each node, provide a list of 6 booleans (True = DOF is fixed).
 supports = {
-    1: [True, True, True, True, True, True],
-    2: [False, True, True, False, False, False]
+  0: [False, True, True, False, False, True],  # Node 0 is partially fixed
+  1: [True, True, True, True, True, True]  # Node 1 is fully fixed
 }
-
-# Create solver instance
+    
+# Instantiate the solver and solve the system.
 solver = Frame3DSolver(nodes, elements, loads, supports)
-
-# Solve for displacements and reactions
 displacements, reactions = solver.solve()
-
-# Display results
-print("Nodal Displacements:", displacements)
-print("Support Reactions:", reactions)
+    
+# Reshape the results for clarity (each row corresponds to a node with 6 DOFs).
+disp_matrix = displacements.reshape((-1, 6))
+reac_matrix = reactions.reshape((-1, 6))
+    
+# Create a dictionary for displacements and reactions
+disp_dict = {node: disp_matrix[i] for i, node in enumerate(nodes)}
+react_dict = {node: reac_matrix[i] for i, node in enumerate(nodes)}
+    
+# Output the results
+print("Nodal Displacements and Rotations:")
+for node, disp in disp_dict.items():
+  print(f"Node {node}: [u: {disp[0]:.6f}, v: {disp[1]:.6f}, w: {disp[2]:.6f}, "
+        f"rot_x: {disp[3]:.6f}, rot_y: {disp[4]:.6f}, rot_z: {disp[5]:.6f}]")
+    
+print("\nReaction Forces and Moments at Supports:")
+for node, react in react_dict.items():
+  # Only display reactions for nodes with boundary conditions
+  if node in supports:
+    print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
+          f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
 ```
