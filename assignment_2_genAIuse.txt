@@ -1,5 +1,6 @@
 Help from ChatGPT was taken for the following things:
-1. Improving Error Handling.
-2. Writing few test cases related to error handling.
-3. Writing the initial structure of README.md file by giving the main code.
-4. Writing print statement in example.py
+1. Writing comments and docstrings by giving the main code.
+2. Improving Error Handling.
+3. Writing few test cases related to error handling.
+4. Writing the initial structure of README.md file by giving the main code.
+5. Writing print statement in example.py
