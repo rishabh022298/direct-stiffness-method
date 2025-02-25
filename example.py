@@ -93,7 +93,13 @@ loads = {
 # Applying Boundary Conditions
 # -----------------------
 """
-Boundary conditions at any node are provided in the form of 6 booleans (True = Fixed DOF)
+Boundary conditions at any node are provided in the form of 6 booleans (True = Fixed DOF).
+First boolean is for displacement in x.
+Second boolean is for displacement in y.
+Third boolean is for displacement in z.
+Fourth boolean is for rotation along x.
+Fifth boolean is for rotation along y.
+Sixth boolean is for rotation along z.
 Syntax:
 supports = {
   nodeID: [True, True, True, True, True, True], # Completely fixed
