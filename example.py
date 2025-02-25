@@ -14,9 +14,9 @@ Even if the problem is set in 2D, still all 3 coordinates are required.
 Few nodes with coordinates [0, 0, 0] are provided. Define all of the nodes using the similar syntax.
 """
 nodes = {
-        0: np.array([0, 0, 0]),
-        1: np.array([0, 0, 0]),
-        2: np.array([0, 0, 0])
+        0: np.array([0, 5, 0]),
+        1: np.array([5, 0, 0]),
+        2: np.array([5, 5, 0])
         # Add more nodes here by inserting , at the end of the previous line
     }
 
