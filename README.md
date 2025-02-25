@@ -178,9 +178,9 @@ loads = {
 }
 ```
 ```python
-# For each node, provide a list of 6 booleans (True = DOF is fixed).
+# For each node, provide a list of 6 (u_x, u_y, u_z, rot_x, rot_y, rot_z) booleans (True = DOF is fixed).
 supports = {
-  0: [False, True, True, False, False, True],  # Node 0 is partially fixed
+  0: [False, True, True, False, False, True],  # Displacement in x and rotation along x and y are allowed at node 0
   1: [True, True, True, True, True, True]      # Node 1 is fully fixed
 }
 ```
