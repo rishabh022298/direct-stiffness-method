@@ -26,23 +26,25 @@ nodes = {
 """
 Sample code for defining element properties is provided. Edit the properties if user wants to use something different.
 User can also copy and paste the following code and rename the variable to define properties for more elements.
+Note for the user: Please calculate each quantity like area and moment of inertia before entering the values.
+This code cannot handle deriving the quantities itself.
 """
 section_props_element_1 = {
-  "E": 210e9,           # Young's modulus in Pascals
+  "E": 210e9,           # Young's modulus
   "nu": 0.3,            # Poisson's ratio
-  "A": 0.01,            # Cross-sectional area in m^2
-  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
-  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
-  "J": 1.67e-5,         # Torsional constant in m^4
+  "A": 0.01,            # Cross-sectional area
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis
+  "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
 }
 
 section_props_element_2 = {
-  "E": 210e9,           # Young's modulus in Pascals
+  "E": 210e9,           # Young's modulus
   "nu": 0.3,            # Poisson's ratio
-  "A": 0.01,            # Cross-sectional area in m^2
-  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
-  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
+  "A": 0.01,            # Cross-sectional area
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant in m^4
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
 }
@@ -127,13 +129,13 @@ react_dict = {node: reac_matrix[i] for i, node in enumerate(nodes)}
 # Output the results
 print("Nodal Displacements and Rotations:")
 for node, disp in disp_dict.items():
-  print(f"Node {node}: [u: {disp[0]:.6f}, v: {disp[1]:.6f}, w: {disp[2]:.6f}, "
-        f"rot_x: {disp[3]:.6f}, rot_y: {disp[4]:.6f}, rot_z: {disp[5]:.6f}]")
+  print(f"Node {node}: [u: {disp[0]:.10f}, v: {disp[1]:.10f}, w: {disp[2]:.10f}, "
+        f"rot_x: {disp[3]:.10f}, rot_y: {disp[4]:.10f}, rot_z: {disp[5]:.10f}]")
     
 print("\nReaction Forces and Moments at Supports:")
 for node, react in react_dict.items():
   # Only display reactions for nodes with boundary conditions
   if node in supports:
-    print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
-          f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
+    print(f"Node {node}: [Fx: {react[0]:.10f}, Fy: {react[1]:.10f}, Fz: {react[2]:.10f}, "
+          f"Mx: {react[3]:.10f}, My: {react[4]:.10f}, Mz: {react[5]:.10f}]")
 
