@@ -1,6 +1,7 @@
 # 3D Frame Solver using the Direct Stiffness Method
 
 This repository provides a robust and modular implementation of a **3D Frame Solver** using the **Direct Stiffness Method**. It is designed to analyze 3D frames under various loading and boundary conditions using Python and **NumPy**.
+*Various files are included, user is required to edit **example.py** for analysing the in class example.* Please go through the section "Input Format" before moving to analysing the in class example.
 
 ---
 
@@ -143,12 +144,12 @@ Next, user needs to define material and geometrical properties of various elemen
 ```python
 # Each element is defined as: (node1, node2, section_properties)
 section_props_element_1 = {
-  "E": 210e9,           # Young's modulus in Pascals
+  "E": 210e9,           # Young's modulus
   "nu": 0.3,            # Poisson's ratio
-  "A": 0.01,            # Cross-sectional area in m^2
-  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
-  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
-  "J": 1.67e-5,         # Torsional constant in m^4
+  "A": 0.01,            # Cross-sectional area
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis
+  "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
 }
 
@@ -156,9 +157,9 @@ section_props_element_2 = {
   "E": 210e9,           # Young's modulus in Pascals
   "nu": 0.3,            # Poisson's ratio
   "A": 0.01,            # Cross-sectional area in m^2
-  "Iz": 8.33e-6,        # Moment of inertia about local z axis in m^4
-  "Iy": 8.33e-6,        # Moment of inertia about local y axis in m^4
-  "J": 1.67e-5,         # Torsional constant in m^4
+  "Iz": 8.33e-6,        # Moment of inertia about local z axis
+  "Iy": 8.33e-6,        # Moment of inertia about local y axis
+  "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
 }
 ```
