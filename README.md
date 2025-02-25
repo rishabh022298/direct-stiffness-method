@@ -156,7 +156,7 @@ section_props_element_1 = {
 section_props_element_2 = {
   "E": 210e9,           # Young's modulus in Pascals
   "nu": 0.3,            # Poisson's ratio
-  "A": 0.01,            # Cross-sectional area in m^2
+  "A": 0.01,            # Cross-sectional area
   "Iz": 8.33e-6,        # Moment of inertia about local z axis
   "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant
