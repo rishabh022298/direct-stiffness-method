@@ -151,6 +151,7 @@ section_props_element_1 = {
   "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+ # Please ensure that local_z is not parallel to the element itself otherwise the user will get a ValueError
 }
 
 section_props_element_2 = {
@@ -161,6 +162,7 @@ section_props_element_2 = {
   "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+# Please ensure that local_z is not parallel to the element itself otherwise the user will get a ValueError
 }
 ```
 Once the properties haves been defined, then user can move on to finalising the geometry by defining which nodes are connected and what are the properties of those elements.
