@@ -37,6 +37,7 @@ section_props_element_1 = {
   "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+# Please ensure that local_z is not parallel to the element itself otherwise the user will get a ValueError
 }
 
 section_props_element_2 = {
@@ -47,6 +48,7 @@ section_props_element_2 = {
   "Iy": 8.33e-6,        # Moment of inertia about local y axis
   "J": 1.67e-5,         # Torsional constant in m^4
   "local_z": np.array([0.0, 0.0, 1.0])  # Reference vector for orientation
+# Please ensure that it is not parallel to the element itself otherwise the user will get a ValueError
 }
 
 # Add more element properties in the space provided below
