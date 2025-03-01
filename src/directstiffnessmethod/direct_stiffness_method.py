@@ -19,6 +19,9 @@ the support reactions.
 
 import numpy as np
 from pathlib import Path
+import matplotlib.pyplot as plt
+from scipy.linalg import eig
+from mpl_toolkits.mplot3d import Axes3D
 
 # -----------------------
 # Computing Local Stiffness Matrix
