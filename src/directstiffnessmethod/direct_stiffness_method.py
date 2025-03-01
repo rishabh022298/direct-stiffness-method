@@ -425,3 +425,144 @@ class Frame3DSolver:
             raise ValueError("Reactions vector must be of length ndof.")
         
         return d, reactions
+
+# -----------------------
+# Compute Internal Forces and Moments
+# -----------------------
+    def compute_internal_forces_and_moments(self, d: np.ndarray):
+        """
+        Compute internal forces and moments for each member in local coordinates.
+        
+        Parameters
+        ----------
+        d : np.ndarray
+            Global displacement vector.
+            
+        Returns
+        -------
+        internal_forces : dict
+            Internal forces and moments in local coordinates for each element.
+        """
+        internal_forces = {}
+        
+        for elem in self.elements:
+            node1, node2, props = elem
+            coord1 = self.nodes[node1]
+            coord2 = self.nodes[node2]
+            
+            L = np.linalg.norm(coord2 - coord1)
+            
+            E = props["E"]
+            nu = props["nu"]
+            A = props["A"]
+            Iz = props["Iz"]
+            Iy = props["Iy"]
+            J = props["J"]
+            local_z = props.get("local_z", None)
+            
+            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
+                                    float(coord2[0]), float(coord2[1]), float(coord2[2]),
+                                    v_temp=local_z)
+            Gamma = transformation_matrix_3D(gamma)
+            k_local = local_elastic_stiffness_matrix_3D_beam(E, nu, A, L, Iy, Iz, J)
+            
+            idx1 = self.node_index_map[node1] * 6
+            idx2 = self.node_index_map[node2] * 6
+            dof_indices = np.array([idx1, idx1+1, idx1+2, idx1+3, idx1+4, idx1+5,
+                                    idx2, idx2+1, idx2+2, idx2+3, idx2+4, idx2+5])
+            
+            d_elem = d[dof_indices]
+            d_local = Gamma @ d_elem
+            
+            # Use a tuple of node identifiers as the key (hashable)
+            internal_forces[(node1, node2)] = k_local @ d_local
+        
+        return internal_forces
+
+# -----------------------
+# Plot Internal Forces and Moments
+# -----------------------
+    def plot_internal_forces_and_moments(self, internal_forces: dict):
+        """
+        Plot internal forces and moments for each member in local coordinates.
+        
+        Parameters
+        ----------
+        internal_forces : dict
+            Internal forces and moments in local coordinates for each element.
+        """
+        for elem, forces in internal_forces.items():
+            # Unpack the tuple (node1, node2)
+            node1, node2 = elem
+            
+            x = [0, np.linalg.norm(self.nodes[node2] - self.nodes[node1])]
+            
+            fig, ax = plt.subplots(2, 2, figsize=(15, 15))
+            fig.suptitle(f'Internal Forces and Moments for Element {elem}', fontsize=25, fontweight='bold')
+            
+            # Axial Force
+            ax[0, 0].plot(x, forces[[0, 6]], label='$F_x$ (Axial Force)', linewidth=2.5)
+            ax[0, 0].set_title('$F_x$ (Axial Force)', fontsize=25, fontweight='bold')
+            ax[0, 0].legend(fontsize=20)
+            ax[0, 0].grid(True)
+
+            # Shear Force in Local y Direction
+            ax[0, 1].plot(x, forces[[1, 7]], label='$F_y$ (Shear Force)', linewidth=2.5)
+            ax[0, 1].set_title('$F_y$ (Shear Force)', fontsize=25, fontweight='bold')
+            ax[0, 1].legend(fontsize=20)
+            ax[0, 1].grid(True)
+
+            # Shear Force in Local z Direction
+            ax[1, 0].plot(x, forces[[2, 8]], label='$F_z$ (Shear Force)', linewidth=2.5)
+            ax[1, 0].set_title('$F_z$ (Shear Force)', fontsize=25, fontweight='bold')
+            ax[1, 0].legend(fontsize=20)
+            ax[1, 0].grid(True)
+
+            # Bending Moment about Local z Axis
+            ax[1, 1].plot(x, forces[[5, 11]], label='$M_z$ (Bending Moment)', linewidth=2.5)
+            ax[1, 1].set_title('$M_z$ (Bending Moment)', fontsize=25, fontweight='bold')
+            ax[1, 1].legend(fontsize=20)
+            ax[1, 1].grid(True)
+
+            plt.show()
+
+# -----------------------
+# Plot Deformed Shape
+# -----------------------
+    def plot_deformed_shape(self, d: np.ndarray, scale: float = 1.0):
+        """
+        Plot the undeformed and deformed shape of the whole structure.
+        
+        Parameters
+        ----------
+        d : np.ndarray
+            Global displacement vector.
+        scale : float, optional
+            Scaling factor for the deformations.
+        """
+        fig = plt.figure(figsize=(15, 15))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        for elem in self.elements:
+            node1, node2, _ = elem
+            
+            x = [self.nodes[node1][0], self.nodes[node2][0]]
+            y = [self.nodes[node1][1], self.nodes[node2][1]]
+            z = [self.nodes[node1][2], self.nodes[node2][2]]
+            
+            ax.plot(x, y, z, color='blue', label='Undeformed', linewidth=2.5)
+            
+            idx1 = self.node_index_map[node1] * 6
+            idx2 = self.node_index_map[node2] * 6
+            
+            xd = [x[0] + scale * d[idx1], x[1] + scale * d[idx2]]
+            yd = [y[0] + scale * d[idx1+1], y[1] + scale * d[idx2+1]]
+            zd = [z[0] + scale * d[idx1+2], z[1] + scale * d[idx2+2]]
+            
+            ax.plot(xd, yd, zd, color='red', linestyle='--', label='Deformed', linewidth=2.5)
+        
+        ax.set_title('Deformed Shape of the Structure', fontsize=20, fontweight='bold')
+        ax.set_xlabel('X', fontsize=15, fontweight='bold')
+        ax.set_ylabel('Y', fontsize=15, fontweight='bold')
+        ax.set_zlabel('Z', fontsize=15, fontweight='bold')
+        plt.show()
