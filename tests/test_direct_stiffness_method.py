@@ -3,11 +3,10 @@ import pytest
 import numpy as np
 from pathlib import Path
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import re
-
-matplotlib.use('Agg')
 
 def test_local_stiffness_matrix_invalid_poisson():
     """
