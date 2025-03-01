@@ -2,7 +2,12 @@ from directstiffnessmethod import direct_stiffness_method as dsm
 import pytest
 import numpy as np
 from pathlib import Path
+import matplotlib
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import re
+
+matplotlib.use('Agg')
 
 def test_local_stiffness_matrix_invalid_poisson():
     """
@@ -896,3 +901,230 @@ def test_solve_invalid_reaction_shape():
 
     with pytest.raises(np.linalg.LinAlgError, match="cond is not defined on empty arrays"):
         solver.solve()
+
+# Sample Test Data
+nodes = {
+    1: np.array([0.0, 0.0, 0.0]),
+    2: np.array([1.0, 0.0, 0.0]),
+    3: np.array([1.0, 1.0, 0.0])
+}
+
+elements = [
+    (1, 2, {
+        "E": 210e9,
+        "nu": 0.3,
+        "A": 0.01,
+        "Iz": 1.0e-6,
+        "Iy": 1.0e-6,
+        "J": 1.0e-6
+    }),
+    (2, 3, {
+        "E": 210e9,
+        "nu": 0.3,
+        "A": 0.01,
+        "Iz": 1.0e-6,
+        "Iy": 1.0e-6,
+        "J": 1.0e-6
+    })
+]
+
+loads = {
+    3: np.array([0.0, -1000.0, 0.0, 0.0, 0.0, 0.0])
+}
+
+supports = {
+    1: [True, True, True, True, True, True],
+    2: [False, True, True, False, False, False]
+}
+
+# Create Solver Instance
+solver = dsm.Frame3DSolver(nodes, elements, loads, supports)
+displacements, reactions = solver.solve()
+
+# -----------------------
+# Test: Compute Internal Forces and Moments
+# -----------------------
+def test_compute_internal_forces_and_moments():
+    internal_forces = solver.compute_internal_forces_and_moments(displacements)
+    
+    # Check if internal forces is a dictionary
+    assert isinstance(internal_forces, dict), "Internal forces should be a dictionary."
+    
+    # Check if keys are tuples of node IDs
+    for key in internal_forces.keys():
+        assert isinstance(key, tuple), "Key should be a tuple of node IDs."
+        assert len(key) == 2, "Key should be a tuple of two node IDs."
+        assert all(isinstance(node_id, int) for node_id in key), "Node IDs should be integers."
+    
+    # Check if values are NumPy arrays of length 12
+    for value in internal_forces.values():
+        assert isinstance(value, np.ndarray), "Internal forces should be a NumPy array."
+        assert value.shape == (12,), "Internal forces array should have length 12."
+
+# -----------------------
+# Test: Plot Internal Forces and Moments
+# -----------------------
+def test_plot_internal_forces_and_moments():
+    internal_forces = solver.compute_internal_forces_and_moments(displacements)
+    
+    # Generate the plot
+    solver.plot_internal_forces_and_moments(internal_forces)
+    
+    # Get the current figure
+    fig = plt.gcf()
+    
+    # Check if a figure is created
+    assert fig is not None, "Figure should be created."
+    
+    # Check if figure has axes
+    assert len(fig.get_axes()) > 0, "Figure should have at least one axis."
+    
+    # Check if axes contain data
+    for ax in fig.get_axes():
+        assert len(ax.lines) > 0, "Plot should contain data."
+    
+    # Close the figure after test
+    plt.close(fig)
+
+# -----------------------
+# Test: Plot Deformed Shape
+# -----------------------
+def test_plot_deformed_shape():
+    solver.plot_deformed_shape(displacements, scale=100)
+    
+    # Get the current figure
+    fig = plt.gcf()
+    
+    # Check if a figure is created
+    assert fig is not None, "Figure should be created."
+    
+    # Check if figure has 3D axes
+    assert len(fig.get_axes()) > 0, "Figure should have at least one axis."
+    ax = fig.get_axes()[0]
+    assert isinstance(ax, Axes3D), "Figure should have 3D axes."
+    
+    # Check if 3D axes contain data
+    assert len(ax.lines) > 0, "3D plot should contain data."
+    
+    # Close the figure after test
+    plt.close(fig)
+
+from directstiffnessmethod.elastic_critical_load_solver import (
+    local_geometric_stiffness_matrix_3D_beam,
+    local_geometric_stiffness_matrix_3D_beam_without_interaction_terms,
+    extract_moments_from_internal_forces,
+    ElasticCriticalLoadSolver,
+)
+
+# --------------------------
+# Test Local Geometric Stiffness Matrix Functions
+# --------------------------
+
+def test_local_geometric_stiffness_without_interaction():
+    """ Test local geometric stiffness matrix without interaction terms. """
+    L, A, I_rho, Fx2 = 5.0, 0.01, 1.0e-6, -1000.0  # Example values
+    
+    k_g = local_geometric_stiffness_matrix_3D_beam_without_interaction_terms(L, A, I_rho, Fx2)
+    
+    assert k_g.shape == (12, 12), "Matrix should be 12x12"
+    assert np.allclose(k_g, k_g.T), "Matrix should be symmetric"
+    assert not np.isnan(k_g).any(), "Matrix should not contain NaN values"
+
+
+def test_local_geometric_stiffness_with_interaction():
+    """ Test local geometric stiffness matrix with interaction terms. """
+    L, A, I_rho = 5.0, 0.01, 1.0e-6  # Example values
+    Fx2, Mx2, My1, Mz1, My2, Mz2 = -1000.0, 50.0, 30.0, 20.0, 40.0, 25.0
+    
+    k_g = local_geometric_stiffness_matrix_3D_beam(L, A, I_rho, Fx2, Mx2, My1, Mz1, My2, Mz2)
+    
+    assert k_g.shape == (12, 12), "Matrix should be 12x12"
+    assert np.allclose(k_g, k_g.T), "Matrix should be symmetric"
+    assert not np.isnan(k_g).any(), "Matrix should not contain NaN values"
+
+# --------------------------
+# Test Extracting Moments from Internal Forces
+# --------------------------
+
+def test_extract_moments_from_internal_forces():
+    """ Test moment and force extraction function. """
+    element = (1, 2)
+    internal_forces = {
+        (1, 2): np.array([0, 0, 0, 0, 30.0, 20.0, -1000.0, 0, 0, 50.0, 40.0, 25.0])
+    }
+    
+    Fx2, Mx2, My1, Mz1, My2, Mz2 = extract_moments_from_internal_forces(internal_forces, element)
+
+    assert Fx2 == -1000.0, "Incorrect axial force"
+    assert Mx2 == 50.0, "Incorrect torsional moment"
+    assert My1 == 30.0, "Incorrect bending moment at node 1"
+    assert Mz1 == 20.0, "Incorrect bending moment at node 1"
+    assert My2 == 40.0, "Incorrect bending moment at node 2"
+    assert Mz2 == 25.0, "Incorrect bending moment at node 2"
+
+# --------------------------
+# Test Elastic Critical Load Solver
+# --------------------------
+
+@pytest.fixture
+def example_frame_solver():
+    """ Create an example Frame3DSolver instance for testing. """
+    nodes = {
+        1: np.array([0.0, 0.0, 0.0]),
+        2: np.array([5.0, 0.0, 0.0]),
+        3: np.array([5.0, 5.0, 0.0]),
+        4: np.array([0.0, 5.0, 0.0])
+    }
+    
+    E, nu, A, Iz, Iy, J = 210e9, 0.3, 0.01, 1.0e-6, 1.0e-6, 1.0e-6
+    elements = [
+        (1, 2, {"E": E, "nu": nu, "A": A, "Iz": Iz, "Iy": Iy, "J": J}),
+        (2, 3, {"E": E, "nu": nu, "A": A, "Iz": Iz, "Iy": Iy, "J": J})
+    ]
+    
+    loads = {3: np.array([0, -1000, 0, 0, 0, 0])}
+    supports = {1: [True]*6, 4: [True]*6}
+
+    return dsm.Frame3DSolver(nodes, elements, loads, supports)
+
+def test_elastic_critical_load_solver_without_interaction(example_frame_solver):
+    """ Test the Elastic Critical Load Solver without interaction terms. """
+    ecl_solver = ElasticCriticalLoadSolver(example_frame_solver, use_interaction_terms=False)
+    
+    eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
+    
+    assert eigenvalues.size > 0, "Eigenvalues should not be empty"
+    assert np.all(eigenvalues > 0), "Eigenvalues should be positive"
+    assert eigenvectors.shape == (example_frame_solver.ndof, eigenvalues.size), "Eigenvector size mismatch"
+
+def test_elastic_critical_load_solver_with_interaction(example_frame_solver):
+    """ Test the Elastic Critical Load Solver with interaction terms. """
+    ecl_solver = ElasticCriticalLoadSolver(example_frame_solver, use_interaction_terms=True)
+    
+    eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
+    
+    assert eigenvalues.size > 0, "Eigenvalues should not be empty"
+    assert np.all(eigenvalues > 0), "Eigenvalues should be positive"
+    assert eigenvectors.shape == (example_frame_solver.ndof, eigenvalues.size), "Eigenvector size mismatch"
+
+# --------------------------
+# Test Plotting Functions (Without Displaying)
+# --------------------------
+
+@pytest.mark.mpl_image_compare
+def test_plot_buckling_mode(example_frame_solver):
+    """ Test the plotting function for buckling mode shapes. """
+    ecl_solver = ElasticCriticalLoadSolver(example_frame_solver, use_interaction_terms=False)
+    eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
+
+    # Generate the plot
+    ecl_solver.plot_buckling_mode(eigenvectors[:, 0], scale=100)
+
+    # Get the current figure
+    fig = plt.gcf()
+
+    # Check if a figure is created
+    assert fig is not None, "Figure should be created."
+
+    # Check if figure has 3D axes
+    assert len(fig.get_axes()) > 0, "Figure should have at least one axis."
