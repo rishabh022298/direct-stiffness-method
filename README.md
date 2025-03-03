@@ -1,7 +1,8 @@
-# 3D Frame Solver using the Direct Stiffness Method
+# Direct Stiffness Method and Elastic Critical Load Analysis
 
-This repository provides a robust and modular implementation of a **3D Frame Solver** using the **Direct Stiffness Method**. It is designed to analyze 3D frames under various loading and boundary conditions using Python and **NumPy**.
-*Various files are included, user is required to edit **example.py** for analysing the in class example.* Please go through the section "Input Format" before moving to analysing the in class example.
+This repository provides a robust and modular implementation of a **3D Frame Solver** using the **Direct Stiffness Method** and **Elastic Critical Load Analysis**.
+*Various files are included, user is required to edit **Direct_Stiffness_Method_and_Buckling_Analysis.ipynb
+** for analysing the in class example.* Please go through the section "Input Format" before moving to analysing the in class example.
 
 ---
 
@@ -24,22 +25,15 @@ The **3D Frame Solver** is designed to:
 - Apply the boundary conditions.
 - Solve the reduced system for nodal displacements and rotations.
 - Compute the support reactions.
+- Compute internal forces and moments.
+- Plotting internal forces and moments.
+- Plotting deformed shape of the structure.
 
-This solver is particularly useful for engineers, researchers, and students involved in structural analysis of frames in civil, mechanical, and aerospace engineering domains.
-
----
-
-## Features
-
-- **Local Elastic Stiffness Matrix**: Computes the local stiffness matrix for a 3D beam element considering axial, torsion, and bending effects.
-- **Rotation Matrix and Transformation Matrix**: Efficiently calculates the rotation and transformation matrices to handle global and local coordinate transformations.
-- **Global Stiffness Assembly**: Assembles the global stiffness matrix using the Direct Stiffness Method.
-- **Load Vector Assembly**: Constructs the global load vector for applied forces and moments.
-- **Boundary Condition Application**: Flexibly applies various boundary conditions including fixed, pinned, and roller supports.
-- **Solution and Post-Processing**:
-  - Solves the reduced system of equations for nodal displacements and rotations.
-  - Computes support reactions for all constrained degrees of freedom.
-- **Error Handling**: Extensive error handling for input validation, numerical stability, and solution accuracy.
+The **Elastic Critical Load Analysis** module is designed to:
+- Assemble geometric stiffness matrix.
+- Solve the eignevalue problem associated with elastic critical load analysis.
+- Plotting buckling mode.
+(**Note:** The elastic critical load solver is programmed to work with both with and without the interaction terms.
 
 ---
 
@@ -86,6 +80,20 @@ Where:
 - $d$ is the vector of nodal displacements and rotations.
 - $F$ is the global load vector.
 - $R$ is the reaction vector at constrained degrees of freedom.
+
+### 4. Nonlinear Elastic Stiffness
+The core equation for nonlinear elastic stiffness problem is:
+
+
+$$
+[K_e + \lambda K_g]\Delta = 0
+$$
+
+Where:
+- $K_e$ is the elastic stiffness matrix.
+- $K_g$ is the geometric stiffness matrix.
+- $\lambda$ are the eigenvalues (load factor).
+- $\Delta$ are the eigenvectors (buckling modes).
 
 ---
 
