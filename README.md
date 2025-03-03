@@ -103,6 +103,8 @@ To use the 3D Frame Solver, you need to have **Python** and **NumPy** installed 
 ### Prerequisites
 - Python 3.12
 - NumPy
+- Scipy
+- Matplotlib
 
 ### Installation
 
