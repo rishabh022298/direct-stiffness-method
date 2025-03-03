@@ -13,7 +13,6 @@ This repository provides a robust and modular implementation of a **3D Frame Sol
 - [Mathematical Formulation](#mathematical-formulation)
 - [Installation](#installation)
 - [Input Format](#input-format)
-- [Output](#output)
 - [Error Handling](#error-handling)
 - [In Class Exercise](#in-class-exercise)
 ---
@@ -133,13 +132,21 @@ Test the code is working with pytest
 pytest -v --cov=directstiffnessmethod --cov-report term-missing
 ```
 ## Input Format
-Script can be used for evaluation as follows:
-
+### Importing Required Libraries
 ```python
 from directstiffnessmethod import direct_stiffness_method as dsm
+from directstiffnessmethod import elastic_critical_load_solver as ecls
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Set matplotlib display settings
+%matplotlib inline
+plt.rcParams["figure.figsize"] = (10, 10)
 ```
-First user needs to define the nodes and their locations (let's say there are three nodes):
+### Direct Stiffness Method
+Script can be used for evaluation as follows:
+Once the required libraries have been imported, then user needs to define the nodes and their locations (let's say there are three nodes):
 ```python
 # Define node coordinates (node ID: [x, y, z])
 nodes = {
@@ -220,20 +227,63 @@ for node, react in react_dict.items():
     print(f"Node {node}: [Fx: {react[0]:.2f}, Fy: {react[1]:.2f}, Fz: {react[2]:.2f}, "
           f"Mx: {react[3]:.2f}, My: {react[4]:.2f}, Mz: {react[5]:.2f}]")
 ```
+Computing internal forces and moments and plotting them for each element:
+```python
+internal_forces = solver.compute_internal_forces_and_moments(displacements)
+solver.plot_internal_forces_and_moments(internal_forces)
+```
+Plotting deformed shape:
+```python
+solver.plot_deformed_shape(displacements, scale=25)  # Adjust scale as per your requirement
+```
+### Elastic Critical Load Analysis
+Nodes, elements, loads and boundary conditions can be used from direct stiffness method, or they can be defined again in a similar manner:
+```python
+nodes_ecls = {
+    0: np.array([0.0, 0.0, 0.0]),
+    1: np.array([5.0, 0.0, 0.0]),
+    2: np.array([5.0, 5.0, 0.0]),
+    3: np.array([0.0, 5.0, 0.0])
+}
+"""
+User can input element properties as demonstrated below. If I_rho is not provided then function will take I_rho = J as default.
+"""
+elements_ecls = [
+    (0, 1, {"E": 210e9, "nu": 0.3, "A": 0.01, "Iz": 1.0e-6, "Iy": 1.0e-6, "J": 1.0e-6}),
+    (1, 2, {"E": 210e9, "nu": 0.3, "A": 0.01, "Iz": 1.0e-6, "Iy": 1.0e-6, "J": 1.0e-6, "I_rho": 2.0e-6})
+]
+
+loads_ecls = {
+    1: np.array([0.1, -0.05, -0.075, 0, 0, 0]),
+    2: np.array([0, 0, 0, 0.5, -0.1, 0.3])
+}
+
+supports_ecls = {
+    0: [True, True, True, True, True, True],
+    3: [True, True, True, True, True, True]
+}
+```
+Then the solver can be initiated:
+```python
+frame_solver_ecla = dsm.Frame3DSolver(nodes_ecls, elements_ecls, loads_ecls, supports_ecls)
+```
+Then solver can be used for both with and without the interaction terms and the load factors can be printed as well as buckling modes can be plotted:
+```python
+# Solve for buckling modes with and without interaction terms
+for use_interaction in [False, True]:
+    solver_type = "Without Interaction Terms" if not use_interaction else "With Interaction Terms"
+    print(f"Solving for {solver_type}")
+
+    ecl_solver = ecls.ElasticCriticalLoadSolver(frame_solver_ecla, use_interaction_terms=use_interaction)
+    eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
+
+    print("Critical Load Factors:", eigenvalues)
+    print(f"Lowest Critical Load Factor: {np.min(eigenvalues)}")
+
+    ecl_solver.plot_buckling_mode(eigenvectors[:, 0], scale=100)
+```
 **Note:** User is expected to take care of units while giving the inputs. Make sure they are consistent throughout.
 
-## Output
-The above script when ran properly will give an output which looks something like this:
-```bash
-Nodal Displacements and Rotations:
-Node 0: [u: 0.000014, v: 0.000000, w: 0.000000, rot_x: 0.000000, rot_y: 0.000000, rot_z: 0.000000]
-Node 1: [u: 0.000000, v: 0.000000, w: 0.000000, rot_x: 0.000000, rot_y: 0.000000, rot_z: 0.000000]
-Node 2: [u: 0.000014, v: -0.000024, w: -0.000000, rot_x: 0.000000, rot_y: -0.000000, rot_z: -0.000006]
-
-Reaction Forces and Moments at Supports:
-Node 0: [Fx: -0.00, Fy: 1.60, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 6.00]
-Node 1: [Fx: 0.00, Fy: 9998.40, Fz: 0.00, Mx: 0.00, My: 0.00, Mz: 2.00]
-```
 
 ## Error Handling
 
@@ -357,7 +407,4 @@ This 3D Frame Solver includes comprehensive error handling to ensure robust and 
 This comprehensive approach to error handling ensures that the 3D Frame Solver is both robust and user-friendly, significantly reducing the likelihood of runtime errors and numerical instabilities.
 
 ## In Class Exercise
-A basic example.py file is provided with the basic structure. User is expected to add nodes, elements, proerties, etc in the provided space in the script to analyse the frame given in the class during code review. Once the script has been finalised, then user can run the in class example by running the following command in the terminal:
-```bash
-python example.py
-```
+A notebook ***Direct_Stiffness_Method_and_Buckling_Analysis.ipynb*** is provided with the basic structure. User is expected to add nodes, elements, proerties, etc in the provided space by editing the notebook (preferably in VSCode) to analyse the frame given in the class during code review. Once the codeblocks has been finalised after adding the necessary details, user is required to execute each code block in an order as they appear.
