@@ -263,7 +263,7 @@ supports_ecls = {
     3: [True, True, True, True, True, True]
 }
 ```
-Then the solver can be initiated:
+Then the solver can be initialized:
 ```python
 frame_solver_ecla = dsm.Frame3DSolver(nodes_ecls, elements_ecls, loads_ecls, supports_ecls)
 ```
