@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import eig
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from .direct_stiffness_method import Frame3DSolver
+from .direct_stiffness_method import Frame3DSolver, rotation_matrix_3D, transformation_matrix_3D
 
 # -----------------------
 # Computing Local Geometric Stiffness Matrix for 3D Beam Element
@@ -223,7 +223,9 @@ class ElasticCriticalLoadSolver:
 
             # Extract actual forces and moments
             Fx2, Mx2, My1, Mz1, My2, Mz2 = extract_moments_from_internal_forces(internal_forces, (node1, node2))
-
+            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
+                                       float(coord2[0]), float(coord2[1]), float(coord2[2]))
+            Gamma = transformation_matrix_3D(gamma)            
             # Choose stiffness calculation method
             if self.use_interaction_terms:
                 k_geo = local_geometric_stiffness_matrix_3D_beam(
@@ -233,7 +235,7 @@ class ElasticCriticalLoadSolver:
                 k_geo = local_geometric_stiffness_matrix_3D_beam_without_interaction_terms(
                     L, A, I_rho, Fx2
                 )
-
+            k_geo_global = Gamma.T @ k_geo @ Gamma
             idx1 = self.frame_solver.node_index_map[node1] * 6
             idx2 = self.frame_solver.node_index_map[node2] * 6
             dof_indices = np.array([idx1, idx1+1, idx1+2, idx1+3, idx1+4, idx1+5,
@@ -241,14 +243,15 @@ class ElasticCriticalLoadSolver:
 
             for i in range(12):
                 for j in range(12):
-                    self.global_geometric_stiffness[dof_indices[i], dof_indices[j]] += k_geo[i, j]
+                    self.global_geometric_stiffness[dof_indices[i], dof_indices[j]] += k_geo_global[i, j]
 
 # -----------------------
 # Solving Eigenvalue Problem
 # -----------------------        
     def solve_eigenvalue_problem(self):
         """
-        Solve the generalized eigenvalue problem to find critical load factors.
+        Solve the elastic critical load problem using:
+        (K_e_ff + λ K_g_ff) Δ = 0.
 
         Returns
         -------
@@ -257,28 +260,67 @@ class ElasticCriticalLoadSolver:
         eigenvectors : np.ndarray
             Array of eigenvectors representing buckling mode shapes.
         """
-        # First, solve for displacements under applied loads
-        d, _ = self.frame_solver.solve()
+        try:
+            # Solve for static displacements
+            d, _ = self.frame_solver.solve()
+            internal_forces = self.frame_solver.compute_internal_forces_and_moments(d)
 
-        # Assemble geometric stiffness matrix using computed forces/moments
-        self.assemble_geometric_stiffness(d)
+            # Loop over elements to extract moments and forces
+            for elem in self.frame_solver.elements:
+                node1, node2 = elem[0], elem[1]  # Extract node indices
 
-        # Assemble elastic stiffness matrix
-        K = self.frame_solver.assemble_stiffness()
+                # Extract the internal forces for this element
+                Fx2, Mx2, My1, Mz1, My2, Mz2 = extract_moments_from_internal_forces(
+                    internal_forces, (node1, node2)
+                )
 
-        # Solve the generalized eigenvalue problem
-        eigenvalues, eigenvectors = eig(K, self.global_geometric_stiffness)
+                #print(f"Element {elem}: Fx2={Fx2}, Mx2={Mx2}, My1={My1}, Mz1={Mz1}, My2={My2}, Mz2={Mz2}")
+            
+            # Assemble geometric stiffness matrix using computed forces/moments
+            self.assemble_geometric_stiffness(d)
 
-        # Filter out complex and negative eigenvalues
-        eigenvalues = np.real(eigenvalues)
-        eigenvalues = eigenvalues[eigenvalues > 0]
+            # Assemble elastic stiffness matrix
+            K_e = self.frame_solver.assemble_stiffness()
 
-        # Sort eigenvalues and corresponding eigenvectors
-        idx = np.argsort(eigenvalues)
-        eigenvalues = eigenvalues[idx]
-        eigenvectors = eigenvectors[:, idx]
+            # Apply boundary conditions correctly
+            bc_result = self.frame_solver.apply_boundary_conditions(K_e, np.zeros(self.ndof))
 
-        return eigenvalues, eigenvectors
+            if bc_result is None or len(bc_result) < 4:
+                raise ValueError("Boundary conditions function did not return expected values.")
+
+            K_e_ff, _, free_dof, fixed_dof = bc_result  # Ensure `fixed_dof` is extracted
+
+            bc_result = self.frame_solver.apply_boundary_conditions(self.global_geometric_stiffness, np.zeros(self.ndof))
+            if bc_result is None or len(bc_result) < 4:
+                raise ValueError("Boundary conditions function did not return expected values.")
+
+            K_g_ff, _, _, _ = bc_result
+            #print("Condition number of reduced K_e_ff:", np.log10(np.linalg.cond(K_e_ff)))
+            #print("Condition number of reduced K_g_ff:", np.log10(np.linalg.cond(K_g_ff)))
+
+            # Debug print statements
+            #print(f"Free DOFs: {free_dof}")
+            #print(f"Fixed DOFs: {fixed_dof}")  
+
+            # Solve the eigenvalue problem
+            eigenvalues, eigenvectors = eig(K_e_ff, -K_g_ff)
+
+            # Convert to real values and remove non-physical eigenvalues
+            eigenvalues = np.real(eigenvalues)
+            valid_indices = np.where(eigenvalues > 0)[0]
+            eigenvalues = eigenvalues[valid_indices]
+            eigenvectors = eigenvectors[:, valid_indices]
+
+            # Sort eigenvalues
+            idx = np.argsort(eigenvalues)
+            eigenvalues = eigenvalues[idx]
+            eigenvectors = eigenvectors[:, idx]
+
+            return eigenvalues, eigenvectors
+
+        except Exception as e:
+            print(f"Error in solve_eigenvalue_problem: {e}")
+            raise
 
 # -----------------------
 # Plotting Buckling Mode
