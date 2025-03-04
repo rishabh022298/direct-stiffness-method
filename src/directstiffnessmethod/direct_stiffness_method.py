@@ -466,6 +466,7 @@ class Frame3DSolver:
             gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
                                     float(coord2[0]), float(coord2[1]), float(coord2[2]),
                                     v_temp=local_z)
+            #print(f"Rotation matrix (gamma) for element ({node1}, {node2}):\n{gamma}\n")
             Gamma = transformation_matrix_3D(gamma)
             k_local = local_elastic_stiffness_matrix_3D_beam(E, nu, A, L, Iy, Iz, J)
             
@@ -479,7 +480,7 @@ class Frame3DSolver:
             
             # Use a tuple of node identifiers as the key (hashable)
             internal_forces[(node1, node2)] = k_local @ d_local
-        
+            f_global = Gamma.T @ internal_forces[(node1, node2)]
         return internal_forces
 
 # -----------------------
