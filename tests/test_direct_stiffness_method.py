@@ -1144,3 +1144,40 @@ def test_plot_buckling_mode(mock_frame_solver):
         ecls.plot_buckling_mode(mock_frame_solver, mode_shape, scale_factor=1.0, n_points=10)
     except Exception as e:
         pytest.fail(f"plot_buckling_mode raised an exception: {e}")
+
+@pytest.fixture
+def frame_solver_ecla():
+    """Fixture to create a Frame3DSolver instance for buckling analysis."""
+    nodes_ecls = {
+        0: np.array([0.0, 0.0, 0.0]),
+        1: np.array([30, 40, 0.0])
+    }
+    r = 1  # Radius of the beam cross-section
+    elements_ecls = [
+        (0, 1, {
+            "E": 1000, "nu": 0.3, "A": np.pi * r**2,
+            "Iz": np.pi * r**4 / 4, "Iy": np.pi * r**4 / 4,
+            "J": np.pi * r**4 / 2, "I_rho": np.pi * r**4 / 2
+        })
+    ]
+    loads_ecls = {
+        1: np.array([-3/5, -4/5, 0, 0, 0, 0])
+    }
+    supports_ecls = {
+        0: [True, True, True, True, True, True]
+    }
+
+    return dsm.Frame3DSolver(nodes_ecls, elements_ecls, loads_ecls, supports_ecls)
+
+@pytest.mark.parametrize("use_interaction_terms", [True, False])
+def test_analytical_lowest_critical_load_factor(frame_solver_ecla, use_interaction_terms):
+    """Test that the lowest critical load factor matches the analytical solution."""
+    analytical_value = 0.7751569170074954
+
+    ecl_solver = ElasticCriticalLoadSolver(frame_solver_ecla, use_interaction_terms=use_interaction_terms)
+    eigenvalues, _ = ecl_solver.solve_eigenvalue_problem()
+    
+    computed_value = np.min(eigenvalues)
+
+    assert np.isclose(computed_value, analytical_value, atol=1e-2), \
+        f"Expected {analytical_value}, but got {computed_value} (using interaction terms: {use_interaction_terms})"
