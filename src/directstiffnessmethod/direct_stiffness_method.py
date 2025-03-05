@@ -569,4 +569,5 @@ class Frame3DSolver:
         ax.set_xlabel('X', fontsize=15, fontweight='bold')
         ax.set_ylabel('Y', fontsize=15, fontweight='bold')
         ax.set_zlabel('Z', fontsize=15, fontweight='bold')
+        ax.legend()
         plt.show()
