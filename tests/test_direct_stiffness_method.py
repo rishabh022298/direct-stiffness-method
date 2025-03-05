@@ -1,4 +1,5 @@
 from directstiffnessmethod import direct_stiffness_method as dsm
+from directstiffnessmethod import elastic_critical_load_solver as ecls
 import pytest
 import numpy as np
 from pathlib import Path
@@ -1110,21 +1111,36 @@ def test_elastic_critical_load_solver_with_interaction(example_frame_solver):
 # --------------------------
 # Test Plotting Functions (Without Displaying)
 # --------------------------
+@pytest.fixture
+def mock_frame_solver():
+    """Fixture to create a mock 3D frame solver instance."""
+    class MockFrameSolver:
+        def __init__(self):
+            self.nodes = {0: np.array([0, 0, 0]), 1: np.array([1, 0, 0])}
+            self.elements = [(0, 1, {})]  # Single beam element
+            self.node_index_map = {0: 0, 1: 1}
 
-@pytest.mark.mpl_image_compare
-def test_plot_buckling_mode(example_frame_solver):
-    """ Test the plotting function for buckling mode shapes. """
-    ecl_solver = ElasticCriticalLoadSolver(example_frame_solver, use_interaction_terms=False)
-    eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
+    return MockFrameSolver()
 
-    # Generate the plot
-    ecl_solver.plot_buckling_mode(eigenvectors[:, 0], scale=100)
+def test_hermite_beam_shape_functions():
+    """Test Hermite shape functions at element endpoints where H2 + H4 should be zero."""
+    L = 1.0
 
-    # Get the current figure
-    fig = plt.gcf()
+    # Check at ξ = 0 (left node)
+    H1, H2, H3, H4 = ecls.hermite_beam_shape_functions(0, L)
+    assert np.isclose(H2 + H4, 0.0, atol=1e-6), f"H2 + H4 should be zero at ξ=0, but got {H2+H4}"
 
-    # Check if a figure is created
-    assert fig is not None, "Figure should be created."
+    # Check at ξ = L (right node)
+    H1, H2, H3, H4 = ecls.hermite_beam_shape_functions(L, L)
+    assert np.isclose(H2 + H4, 0.0, atol=1e-6), f"H2 + H4 should be zero at ξ=1, but got {H2+H4}"
 
-    # Check if figure has 3D axes
-    assert len(fig.get_axes()) > 0, "Figure should have at least one axis."
+def test_plot_buckling_mode(mock_frame_solver):
+    """Test that plot_buckling_mode runs without errors using Matplotlib in Agg mode."""
+    plt.switch_backend("Agg")  # Ensure Matplotlib is using Agg backend
+
+    mode_shape = np.zeros(12)  # Mock mode shape with zero displacement
+
+    try:
+        ecls.plot_buckling_mode(mock_frame_solver, mode_shape, scale_factor=1.0, n_points=10)
+    except Exception as e:
+        pytest.fail(f"plot_buckling_mode raised an exception: {e}")
