@@ -6,3 +6,5 @@ Help from ChatGPT was taken for the following things:
 5. Writing print statement in example.py
 6. Writing plotting functions.
 7. Understanding syntax of eig function in scipy.linalg.
+8. Creating plotting function for buckling modes.
+9. Writing test cases related to plotting.
