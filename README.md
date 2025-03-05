@@ -32,7 +32,7 @@ The **Elastic Critical Load Analysis** module is designed to:
 - Assemble geometric stiffness matrix.
 - Solve the eignevalue problem associated with elastic critical load analysis.
 - Plotting buckling mode.
-(**Note:** The elastic critical load solver is programmed to work with both with and without the interaction terms.
+(**Note:** The elastic critical load solver is programmed to work with both with and without the interaction terms.)
 
 ---
 
@@ -272,17 +272,19 @@ frame_solver_ecla = dsm.Frame3DSolver(nodes_ecls, elements_ecls, loads_ecls, sup
 Then solver can be used for both with and without the interaction terms and the load factors can be printed as well as buckling modes can be plotted:
 ```python
 # Solve for buckling modes with and without interaction terms
-for use_interaction in [False, True]:
+for use_interaction in [True, False]:
     solver_type = "Without Interaction Terms" if not use_interaction else "With Interaction Terms"
     print(f"Solving for {solver_type}")
 
     ecl_solver = ecls.ElasticCriticalLoadSolver(frame_solver_ecla, use_interaction_terms=use_interaction)
     eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()
 
+    mode_shape = eigenvectors[:, 0]
+
+    # Plot the first buckling mode using Hermite shape functions
     print("Critical Load Factors:", eigenvalues)
     print(f"Lowest Critical Load Factor: {np.min(eigenvalues)}")
-
-    ecl_solver.plot_buckling_mode(eigenvectors[:, 0], scale=100)
+    ecls.plot_buckling_mode(ecl_solver.frame_solver, mode_shape, scale_factor=5)
 ```
 **Note:** User is expected to take care of units while giving the inputs. Make sure they are consistent throughout.
 
