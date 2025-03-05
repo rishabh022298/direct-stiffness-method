@@ -302,10 +302,10 @@ class ElasticCriticalLoadSolver:
             # Debug print statements
             #print(f"Free DOFs: {free_dof}")
             #print(f"Fixed DOFs: {fixed_dof}")  
-            print(f"Total system DOFs: {self.frame_solver.ndof}")
-            print(f"Fixed DOFs: {fixed_dof}")
-            print(f"Free DOFs: {free_dof}")
-            print(f"Expected eigenvector size (should match free DOFs): {len(free_dof)}")
+            #print(f"Total system DOFs: {self.frame_solver.ndof}")
+            #print(f"Fixed DOFs: {fixed_dof}")
+            #print(f"Free DOFs: {free_dof}")
+            #print(f"Expected eigenvector size (should match free DOFs): {len(free_dof)}")
             # Solve the eigenvalue problem
             eigenvalues, eigenvectors = eig(K_e_ff, -K_g_ff)
 
@@ -319,11 +319,11 @@ class ElasticCriticalLoadSolver:
             idx = np.argsort(eigenvalues)
             eigenvalues = eigenvalues[idx]
             eigenvectors = eigenvectors[:, idx]
-            print(f"Eigenvector shape: {eigenvectors.shape}")
-            print(f"Total expected DOFs (frame_solver.ndof): {self.frame_solver.ndof}")
-            print(f"Eigenvector matrix shape: {eigenvectors.shape}")
-            print(f"Total DOFs in system (before BCs): {self.frame_solver.ndof}")
-            print(f"Free DOFs in system (after BCs): {len(free_dof)}")
+            #print(f"Eigenvector shape: {eigenvectors.shape}")
+            #print(f"Total expected DOFs (frame_solver.ndof): {self.frame_solver.ndof}")
+            #print(f"Eigenvector matrix shape: {eigenvectors.shape}")
+            #print(f"Total DOFs in system (before BCs): {self.frame_solver.ndof}")
+            #print(f"Free DOFs in system (after BCs): {len(free_dof)}")
             
             # Map eigenvectors back to full DOF system
             # Extract fixed and free DOFs from the existing bc_result
@@ -340,10 +340,10 @@ class ElasticCriticalLoadSolver:
             # Debugging print to verify fixed DOFs are zero
             for dof in fixed_dof:
                 if not np.allclose(full_mode_shapes[dof, :], 0):
-                    print(f"⚠️ Fixed DOF {dof} is not zero! Setting it again.")
+                    #print(f"⚠️ Fixed DOF {dof} is not zero! Setting it again.")
                     full_mode_shapes[dof, :] = 0  # Redundant safety check
 
-            print(f"✅ Fixed DOFs enforced correctly. Shape of mode shapes: {full_mode_shapes.shape}")
+            #print(f" Fixed DOFs enforced correctly. Shape of mode shapes: {full_mode_shapes.shape}")
 
             return eigenvalues, full_mode_shapes
 
@@ -355,36 +355,32 @@ class ElasticCriticalLoadSolver:
 # Plotting Buckling Mode
 # -----------------------    
 
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 def hermite_beam_shape_functions(s, L):
     """
     Compute cubic Hermite shape functions for beam bending.
 
     Parameters
     ----------
-    s : array
+    s : float
         Parametric coordinate along the element (0 ≤ s ≤ L).
     L : float
         Element length.
 
     Returns
     -------
-    H : dict
-        Dictionary containing Hermite shape functions H1, H2, H3, H4.
+    H1, H2, H3, H4 : float
+        Hermite shape function values at `s`.
     """
-    xi = s / L  # Normalized coordinate (0 to 1)
+    xi = s / L  # Normalized coordinate (0 ≤ xi ≤ 1)
     
     H1 = 1 - 3 * xi**2 + 2 * xi**3
-    H2 = L * (xi - 2 * xi**2 + xi**3)
+    H2 = L * (xi*(1 - xi)**2)
     H3 = 3 * xi**2 - 2 * xi**3
-    H4 = L * (-xi**2 + xi**3)
+    H4 = L * (xi*(xi**2 - xi))
 
     return H1, H2, H3, H4
 
-def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=50):
+def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100):
     """
     Plot the buckled structure using **true Hermite cubic interpolation** for 3D beam bending.
 
@@ -461,6 +457,6 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=50):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_title('Buckled Structure (True Hermite Interpolation)')
+    ax.set_title('Elastic Critical Load Analysis')
     ax.legend()
     plt.show()
