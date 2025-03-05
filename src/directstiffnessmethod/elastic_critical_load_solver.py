@@ -196,7 +196,7 @@ class ElasticCriticalLoadSolver:
         self.use_interaction_terms = use_interaction_terms
         self.ndof = frame_solver.ndof
         self.global_geometric_stiffness = np.zeros((self.ndof, self.ndof))
-
+        self.fixed_dof = None  # Store fixed DOFs inside the class
 # -----------------------
 # Assembling Geometric Stiffness
 # -----------------------    
@@ -287,8 +287,9 @@ class ElasticCriticalLoadSolver:
 
             if bc_result is None or len(bc_result) < 4:
                 raise ValueError("Boundary conditions function did not return expected values.")
-
-            K_e_ff, _, free_dof, fixed_dof = bc_result  # Ensure `fixed_dof` is extracted
+            
+            K_e_ff, _, free_dof, fixed_dof = bc_result  # Extract fixed DOFs
+            self.fixed_dof = fixed_dof  # 🔥 Store it for later use
 
             bc_result = self.frame_solver.apply_boundary_conditions(self.global_geometric_stiffness, np.zeros(self.ndof))
             if bc_result is None or len(bc_result) < 4:
@@ -301,7 +302,10 @@ class ElasticCriticalLoadSolver:
             # Debug print statements
             #print(f"Free DOFs: {free_dof}")
             #print(f"Fixed DOFs: {fixed_dof}")  
-
+            print(f"Total system DOFs: {self.frame_solver.ndof}")
+            print(f"Fixed DOFs: {fixed_dof}")
+            print(f"Free DOFs: {free_dof}")
+            print(f"Expected eigenvector size (should match free DOFs): {len(free_dof)}")
             # Solve the eigenvalue problem
             eigenvalues, eigenvectors = eig(K_e_ff, -K_g_ff)
 
@@ -315,8 +319,33 @@ class ElasticCriticalLoadSolver:
             idx = np.argsort(eigenvalues)
             eigenvalues = eigenvalues[idx]
             eigenvectors = eigenvectors[:, idx]
+            print(f"Eigenvector shape: {eigenvectors.shape}")
+            print(f"Total expected DOFs (frame_solver.ndof): {self.frame_solver.ndof}")
+            print(f"Eigenvector matrix shape: {eigenvectors.shape}")
+            print(f"Total DOFs in system (before BCs): {self.frame_solver.ndof}")
+            print(f"Free DOFs in system (after BCs): {len(free_dof)}")
+            
+            # Map eigenvectors back to full DOF system
+            # Extract fixed and free DOFs from the existing bc_result
+            _, _, free_dof, fixed_dof = bc_result  # Ensure fixed DOFs are correctly extracted
 
-            return eigenvalues, eigenvectors
+            # Map eigenvectors back to the full system DOFs
+            full_mode_shapes = np.zeros((self.frame_solver.ndof, eigenvectors.shape[1]))
+            for mode in range(eigenvectors.shape[1]):
+                full_mode_shapes[free_dof, mode] = eigenvectors[:, mode]  # Map free DOFs back
+
+            # 🔥 Double-check that fixed DOFs are actually zero
+            full_mode_shapes[fixed_dof, :] = 0  # Explicitly set them to zero
+
+            # Debugging print to verify fixed DOFs are zero
+            for dof in fixed_dof:
+                if not np.allclose(full_mode_shapes[dof, :], 0):
+                    print(f"⚠️ Fixed DOF {dof} is not zero! Setting it again.")
+                    full_mode_shapes[dof, :] = 0  # Redundant safety check
+
+            print(f"✅ Fixed DOFs enforced correctly. Shape of mode shapes: {full_mode_shapes.shape}")
+
+            return eigenvalues, full_mode_shapes
 
         except Exception as e:
             print(f"Error in solve_eigenvalue_problem: {e}")
@@ -325,40 +354,113 @@ class ElasticCriticalLoadSolver:
 # -----------------------
 # Plotting Buckling Mode
 # -----------------------    
-    def plot_buckling_mode(self, eigenvector, scale=1.0):
-        """
-        Plot the buckling mode shape corresponding to an eigenvector.
-        
-        Parameters
-        ----------
-        eigenvector : np.ndarray
-            The eigenvector representing the buckling mode shape.
-        scale : float, optional
-            Scaling factor for the deformations.
-        """
-        fig = plt.figure(figsize=(15, 15))
-        ax = fig.add_subplot(111, projection='3d')
-        
-        for elem in self.frame_solver.elements:
-            node1, node2, _ = elem
-            
-            x = [self.frame_solver.nodes[node1][0], self.frame_solver.nodes[node2][0]]
-            y = [self.frame_solver.nodes[node1][1], self.frame_solver.nodes[node2][1]]
-            z = [self.frame_solver.nodes[node1][2], self.frame_solver.nodes[node2][2]]
-            
-            ax.plot(x, y, z, color='blue', label='Undeformed', linewidth=2.5)
-            
-            idx1 = self.frame_solver.node_index_map[node1] * 6
-            idx2 = self.frame_solver.node_index_map[node2] * 6
-            
-            xd = [x[0] + scale * eigenvector[idx1], x[1] + scale * eigenvector[idx2]]
-            yd = [y[0] + scale * eigenvector[idx1+1], y[1] + scale * eigenvector[idx2+1]]
-            zd = [z[0] + scale * eigenvector[idx1+2], z[1] + scale * eigenvector[idx2+2]]
-            
-            ax.plot(xd, yd, zd, color='red', linestyle='--', label='Buckling Mode', linewidth=2.5)
-        
-        ax.set_title('Buckling Mode Shape', fontsize=20, fontweight='bold')
-        ax.set_xlabel('X', fontsize=15, fontweight='bold')
-        ax.set_ylabel('Y', fontsize=15, fontweight='bold')
-        ax.set_zlabel('Z', fontsize=15, fontweight='bold')
-        plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def hermite_beam_shape_functions(s, L):
+    """
+    Compute cubic Hermite shape functions for beam bending.
+
+    Parameters
+    ----------
+    s : array
+        Parametric coordinate along the element (0 ≤ s ≤ L).
+    L : float
+        Element length.
+
+    Returns
+    -------
+    H : dict
+        Dictionary containing Hermite shape functions H1, H2, H3, H4.
+    """
+    xi = s / L  # Normalized coordinate (0 to 1)
+    
+    H1 = 1 - 3 * xi**2 + 2 * xi**3
+    H2 = L * (xi - 2 * xi**2 + xi**3)
+    H3 = 3 * xi**2 - 2 * xi**3
+    H4 = L * (-xi**2 + xi**3)
+
+    return H1, H2, H3, H4
+
+def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=50):
+    """
+    Plot the buckled structure using **true Hermite cubic interpolation** for 3D beam bending.
+
+    Parameters
+    ----------
+    frame_solver : Frame3DSolver
+        Instance of Frame3DSolver containing frame geometry and elements.
+    mode_shape : np.ndarray
+        Eigenvector corresponding to a buckling mode, representing nodal displacements and rotations.
+    scale_factor : float, optional
+        Factor to scale the mode shape for better visualization (default is 1.0).
+    n_points : int, optional
+        Number of points per element for interpolation (default is 50).
+    """
+    fig = plt.figure(figsize=(12, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Extract node positions and deformations
+    nodes = frame_solver.nodes
+    deformed_nodes = {}
+
+    for node, coords in nodes.items():
+        idx = frame_solver.node_index_map[node] * 6
+        displacement = mode_shape[idx:idx + 3]  # Translational DOFs [u, v, w]
+        deformed_nodes[node] = coords + scale_factor * displacement
+
+    # Plot undeformed structure
+    for elem in frame_solver.elements:
+        node1, node2, _ = elem
+        coord1 = nodes[node1]
+        coord2 = nodes[node2]
+        ax.plot([coord1[0], coord2[0]], [coord1[1], coord2[1]], [coord1[2], coord2[2]],
+                'k--', linewidth=1, label='Undeformed' if elem == frame_solver.elements[0] else "")
+
+    # Plot deformed structure using **true Hermite shape functions**
+    for elem in frame_solver.elements:
+        node1, node2, _ = elem
+        idx1 = frame_solver.node_index_map[node1] * 6
+        idx2 = frame_solver.node_index_map[node2] * 6
+
+        # Extract deformed nodal positions
+        coord1 = deformed_nodes[node1]
+        coord2 = deformed_nodes[node2]
+
+        # Extract displacements and rotations
+        u1, v1, w1 = scale_factor * mode_shape[idx1:idx1 + 3]
+        u2, v2, w2 = scale_factor * mode_shape[idx2:idx2 + 3]
+        theta_x1, theta_y1, theta_z1 = scale_factor * mode_shape[idx1 + 3:idx1 + 6]
+        theta_x2, theta_y2, theta_z2 = scale_factor * mode_shape[idx2 + 3:idx2 + 6]
+
+        # Compute element length
+        L = np.linalg.norm(coord2 - coord1)
+        s_vals = np.linspace(0, L, n_points)
+
+        # Interpolated coordinates using Hermite cubic shape functions
+        x_hermite, y_hermite, z_hermite = [], [], []
+
+        for s in s_vals:
+            H1, H2, H3, H4 = hermite_beam_shape_functions(s, L)
+
+            # Interpolate displacements
+            x = H1 * coord1[0] + H2 * theta_x1 + H3 * coord2[0] + H4 * theta_x2
+            y = H1 * coord1[1] + H2 * theta_y1 + H3 * coord2[1] + H4 * theta_y2
+            z = H1 * coord1[2] + H2 * theta_z1 + H3 * coord2[2] + H4 * theta_z2
+
+            x_hermite.append(x)
+            y_hermite.append(y)
+            z_hermite.append(z)
+
+        ax.plot(x_hermite, y_hermite, z_hermite, 'r-', linewidth=2,
+                label='Buckled Shape' if elem == frame_solver.elements[0] else "")
+
+    # Labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Buckled Structure (True Hermite Interpolation)')
+    ax.legend()
+    plt.show()
