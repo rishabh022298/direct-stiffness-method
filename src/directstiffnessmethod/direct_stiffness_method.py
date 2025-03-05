@@ -554,7 +554,7 @@ class Frame3DSolver:
             y = [self.nodes[node1][1], self.nodes[node2][1]]
             z = [self.nodes[node1][2], self.nodes[node2][2]]
             
-            ax.plot(x, y, z, color='blue', label='Undeformed', linewidth=2.5)
+            ax.plot(x, y, z, color='blue', linestyle='--', label='Undeformed', linewidth=2.5)
             
             idx1 = self.node_index_map[node1] * 6
             idx2 = self.node_index_map[node2] * 6
@@ -563,7 +563,7 @@ class Frame3DSolver:
             yd = [y[0] + scale * d[idx1+1], y[1] + scale * d[idx2+1]]
             zd = [z[0] + scale * d[idx1+2], z[1] + scale * d[idx2+2]]
             
-            ax.plot(xd, yd, zd, color='red', linestyle='--', label='Deformed', linewidth=2.5)
+            ax.plot(xd, yd, zd, color='red', label='Deformed', linewidth=2.5)
         
         ax.set_title('Deformed Shape of the Structure', fontsize=20, fontweight='bold')
         ax.set_xlabel('X', fontsize=15, fontweight='bold')
