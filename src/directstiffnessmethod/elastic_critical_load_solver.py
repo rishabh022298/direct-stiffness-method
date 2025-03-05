@@ -407,6 +407,9 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
         displacement = mode_shape[idx:idx + 3]  # Translational DOFs [u, v, w]
         deformed_nodes[node] = coords + scale_factor * displacement
 
+    # Store all coordinates for axis scaling
+    all_x, all_y, all_z = [], [], []
+
     # Plot undeformed structure
     for elem in frame_solver.elements:
         node1, node2, _ = elem
@@ -414,6 +417,9 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
         coord2 = nodes[node2]
         ax.plot([coord1[0], coord2[0]], [coord1[1], coord2[1]], [coord1[2], coord2[2]],
                 'k--', linewidth=1, label='Undeformed' if elem == frame_solver.elements[0] else "")
+        all_x.extend([coord1[0], coord2[0]])
+        all_y.extend([coord1[1], coord2[1]])
+        all_z.extend([coord1[2], coord2[2]])
 
     # Plot deformed structure using **true Hermite shape functions**
     for elem in frame_solver.elements:
@@ -452,6 +458,25 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
 
         ax.plot(x_hermite, y_hermite, z_hermite, 'r-', linewidth=2,
                 label='Buckled Shape' if elem == frame_solver.elements[0] else "")
+
+        all_x.extend(x_hermite)
+        all_y.extend(y_hermite)
+        all_z.extend(z_hermite)
+
+    # Set equal axis ranges
+    min_x, max_x = min(all_x), max(all_x)
+    min_y, max_y = min(all_y), max(all_y)
+    min_z, max_z = min(all_z), max(all_z)
+
+    max_range = max(max_x - min_x, max_y - min_y, max_z - min_z) / 2.0
+
+    mid_x = (max_x + min_x) / 2.0
+    mid_y = (max_y + min_y) / 2.0
+    mid_z = (max_z + min_z) / 2.0
+
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
     # Labels and title
     ax.set_xlabel('X')
