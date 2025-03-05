@@ -33,7 +33,7 @@ The **Elastic Critical Load Analysis** module is designed to:
 - Solve the eignevalue problem associated with elastic critical load analysis.
 - Plotting buckling mode using Hermite shape functions.
   
-(**Note:** The elastic critical load solver is programmed to work with both with and without the interaction terms.)
+(**Note:** The elastic critical load solver is programmed to work with both i.e., with and without the interaction terms.)
 
 ---
 
